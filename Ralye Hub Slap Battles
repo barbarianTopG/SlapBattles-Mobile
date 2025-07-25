@@ -1,177 +1,3 @@
-local function loadKeySystem(callback)
-	-- Create a ScreenGui
-	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = "RalyeHubAuth"
-	screenGui.Parent = game.CoreGui
-
-	-- Create a main frame
-	local mainFrame = Instance.new("Frame")
-	mainFrame.Parent = screenGui
-	mainFrame.Size = UDim2.new(0, 320, 0, 420)
-	mainFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
-	mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-	mainFrame.BorderSizePixel = 0
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 8)
-	corner.Parent = mainFrame
-	local shadow = Instance.new("ImageLabel")
-	shadow.Parent = mainFrame
-	shadow.BackgroundTransparency = 1
-	shadow.Image = "rbxassetid://10389822797"
-	shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-	shadow.ImageTransparency = 0.5
-	shadow.ScaleType = Enum.ScaleType.Slice
-	shadow.SliceCenter = Rect.new(20, 20, 280, 280)
-	shadow.Size = UDim2.new(1, 12, 1, 12)
-	shadow.Position = UDim2.new(0, -6, 0, -6)
-	shadow.ZIndex = 0
-
-	-- Add a Title
-	local titleLabel = Instance.new("TextLabel")
-	titleLabel.Parent = mainFrame
-	titleLabel.Size = UDim2.new(1, 0, 0, 40)
-	titleLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-	titleLabel.Text = "Ralye Hub Authentication"
-	titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	titleLabel.Font = Enum.Font.GothamBold
-	titleLabel.TextSize = 18
-	local titleCorner = Instance.new("UICorner")
-	titleCorner.CornerRadius = UDim.new(0, 8)
-	titleCorner.Parent = titleLabel
-
-	-- UI List Layout for organization
-	local listLayout = Instance.new("UIListLayout")
-	listLayout.Parent = mainFrame
-	listLayout.Padding = UDim.new(0, 10)
-	listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	listLayout.Padding = UDim.new(0, 15)
-	listLayout.Margin = UDim.new(0, 50)
-
-	-- Create a Status Label
-	local statusLabel = Instance.new("TextLabel")
-	statusLabel.Parent = mainFrame
-	statusLabel.LayoutOrder = 1
-	statusLabel.Size = UDim2.new(0.9, 0, 0, 20)
-	statusLabel.BackgroundTransparency = 1
-	statusLabel.Text = "Status: Awaiting input"
-	statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-	statusLabel.Font = Enum.Font.Gotham
-	statusLabel.TextSize = 16
-
-	-- Function to create a standard button
-	local function createButton(text, order)
-		local button = Instance.new("TextButton")
-		button.Parent = mainFrame
-		button.LayoutOrder = order
-		button.Size = UDim2.new(0.9, 0, 0, 45)
-		button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-		button.Text = text
-		button.TextColor3 = Color3.fromRGB(255, 255, 255)
-		button.Font = Enum.Font.GothamSemibold
-		button.TextSize = 18
-		local btnCorner = Instance.new("UICorner")
-		btnCorner.CornerRadius = UDim.new(0, 6)
-		btnCorner.Parent = button
-		return button
-	end
-
-	-- Create the key system buttons and input
-	local getKeyButton = createButton("Get Key", 2)
-	local joinDiscordButton = createButton("Join Discord", 3)
-	
-	local keyInput = Instance.new("TextBox")
-	keyInput.Parent = mainFrame
-	keyInput.LayoutOrder = 4
-	keyInput.Size = UDim2.new(0.9, 0, 0, 45)
-	keyInput.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-	keyInput.TextColor3 = Color3.fromRGB(220, 220, 220)
-	keyInput.PlaceholderText = "Enter Key Manually..."
-	keyInput.Font = Enum.Font.Gotham
-	keyInput.TextSize = 16
-	local inputCorner = Instance.new("UICorner")
-	inputCorner.CornerRadius = UDim.new(0, 6)
-	inputCorner.Parent = keyInput
-
-	local checkKeyButton = createButton("Check Manual Key", 5)
-	local pasteAndCheckButton = createButton("Paste & Check Key", 6)
-
-	local API_BASE_URL = "https://ralye-hub-backend.vercel.app"
-	local hwid = tostring(game:GetService("Players").LocalPlayer.UserId)
-	local HttpService = game:GetService("HttpService")
-	local request = request or syn.request or http.request or getgenv().request
-
-	local function performVerification(key)
-		if not key or key == "" then
-			statusLabel.Text = "Status: Input was empty."
-			return
-		end
-
-		statusLabel.Text = "Status: Verifying key..."
-
-		local success, response = pcall(function()
-			return request({
-				Url = API_BASE_URL .. "/api/validate",
-				Method = "POST",
-				Headers = {["Content-Type"] = "application/json"},
-				Body = HttpService:JSONEncode({key = key, hwid = hwid})
-			})
-		end)
-
-		if not success then
-			statusLabel.Text = "Error: Request failed."
-			return
-		end
-
-		local jsonSuccess, responseData = pcall(HttpService.JSONDecode, HttpService, response.Body)
-
-		if not jsonSuccess then
-			statusLabel.Text = "Error: Invalid server response."
-			return
-		end
-
-		if responseData.success == true then
-			statusLabel.Text = "Key Verified! Loading..."
-			wait(2)
-			screenGui:Destroy()
-			callback() -- This runs the main hub function.
-		else
-			statusLabel.Text = "Key is denied. (" .. (responseData.message or "Unknown failure") .. ")"
-		end
-	end
-
-	-- Connect button events
-	getKeyButton.MouseButton1Click:Connect(function()
-		setclipboard(API_BASE_URL)
-		statusLabel.Text = "Status: 'Get Key' link copied."
-	end)
-
-	joinDiscordButton.MouseButton1Click:Connect(function()
-		setclipboard("https://discord.gg/KeF7zJCPHH")
-		statusLabel.Text = "Status: Discord link copied."
-	end)
-
-	checkKeyButton.MouseButton1Click:Connect(function()
-		performVerification(keyInput.Text)
-	end)
-
-	pasteAndCheckButton.MouseButton1Click:Connect(function()
-		local clipboard = getclipboard()
-		if clipboard then
-			keyInput.Text = clipboard
-			performVerification(clipboard)
-		else
-			statusLabel.Text = "Status: Clipboard is empty."
-		end
-	end)
-	
-	keyInput.FocusLost:Connect(function(enterPressed)
-		if enterPressed then
-			performVerification(keyInput.Text)
-		end
-	end)
-end
-
 local function loadMainHub()
 	-- Create a ScreenGui
 	local screenGui = Instance.new("ScreenGui")
@@ -351,6 +177,171 @@ local function loadMainHub()
 			scrollFrame.Visible = true
 			scrollFrame:TweenSize(UDim2.new(0, 250, 0, 400), "Out", "Quad", 0.5, true)
 			guiOpen = true
+		end
+	end)
+end
+
+local function loadKeySystem(callback)
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "RalyeHubAuth"
+	screenGui.Parent = game.CoreGui
+
+	local mainFrame = Instance.new("Frame")
+	mainFrame.Parent = screenGui
+	mainFrame.Size = UDim2.new(0, 320, 0, 420)
+	mainFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
+	mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	mainFrame.BorderSizePixel = 0
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = mainFrame
+	local shadow = Instance.new("ImageLabel")
+	shadow.Parent = mainFrame
+	shadow.BackgroundTransparency = 1
+	shadow.Image = "rbxassetid://10389822797"
+	shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+	shadow.ImageTransparency = 0.5
+	shadow.ScaleType = Enum.ScaleType.Slice
+	shadow.SliceCenter = Rect.new(20, 20, 280, 280)
+	shadow.Size = UDim2.new(1, 12, 1, 12)
+	shadow.Position = UDim2.new(0, -6, 0, -6)
+	shadow.ZIndex = 0
+
+	local titleLabel = Instance.new("TextLabel")
+	titleLabel.Parent = mainFrame
+	titleLabel.Size = UDim2.new(1, 0, 0, 40)
+	titleLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	titleLabel.Text = "Ralye Hub Authentication"
+	titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	titleLabel.Font = Enum.Font.GothamBold
+	titleLabel.TextSize = 18
+	local titleCorner = Instance.new("UICorner")
+	titleCorner.CornerRadius = UDim.new(0, 8)
+	titleCorner.Parent = titleLabel
+
+	local listLayout = Instance.new("UIListLayout")
+	listLayout.Parent = mainFrame
+	listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	listLayout.Padding = UDim.new(0, 15)
+	listLayout.From = UDim.new(0, 50) -- Corrected property to create top margin
+
+	local statusLabel = Instance.new("TextLabel")
+	statusLabel.Parent = mainFrame
+	statusLabel.LayoutOrder = 1
+	statusLabel.Size = UDim2.new(0.9, 0, 0, 20)
+	statusLabel.BackgroundTransparency = 1
+	statusLabel.Text = "Status: Awaiting input"
+	statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+	statusLabel.Font = Enum.Font.Gotham
+	statusLabel.TextSize = 16
+
+	local function createButton(text, order)
+		local button = Instance.new("TextButton")
+		button.Parent = mainFrame
+		button.LayoutOrder = order
+		button.Size = UDim2.new(0.9, 0, 0, 45)
+		button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		button.Text = text
+		button.TextColor3 = Color3.fromRGB(255, 255, 255)
+		button.Font = Enum.Font.GothamSemibold
+		button.TextSize = 18
+		local btnCorner = Instance.new("UICorner")
+		btnCorner.CornerRadius = UDim.new(0, 6)
+		btnCorner.Parent = button
+		return button
+	end
+
+	local getKeyButton = createButton("Get Key", 2)
+	local joinDiscordButton = createButton("Join Discord", 3)
+	
+	local keyInput = Instance.new("TextBox")
+	keyInput.Parent = mainFrame
+	keyInput.LayoutOrder = 4
+	keyInput.Size = UDim2.new(0.9, 0, 0, 45)
+	keyInput.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+	keyInput.TextColor3 = Color3.fromRGB(220, 220, 220)
+	keyInput.PlaceholderText = "Enter Key Manually..."
+	keyInput.Font = Enum.Font.Gotham
+	keyInput.TextSize = 16
+	local inputCorner = Instance.new("UICorner")
+	inputCorner.CornerRadius = UDim.new(0, 6)
+	inputCorner.Parent = keyInput
+
+	local checkKeyButton = createButton("Check Manual Key", 5)
+	local pasteAndCheckButton = createButton("Paste & Check Key", 6)
+
+	local API_BASE_URL = "https://ralye-hub-backend.vercel.app"
+	local hwid = tostring(game:GetService("Players").LocalPlayer.UserId)
+	local HttpService = game:GetService("HttpService")
+	local request = request or syn.request or http.request or getgenv().request
+
+	local function performVerification(key)
+		if not key or key == "" then
+			statusLabel.Text = "Status: Input was empty."
+			return
+		end
+
+		statusLabel.Text = "Status: Verifying key..."
+
+		local success, response = pcall(function()
+			return request({
+				Url = API_BASE_URL .. "/api/validate",
+				Method = "POST",
+				Headers = {["Content-Type"] = "application/json"},
+				Body = HttpService:JSONEncode({key = key, hwid = hwid})
+			})
+		end)
+
+		if not success then
+			statusLabel.Text = "Error: Request failed."
+			return
+		end
+
+		local jsonSuccess, responseData = pcall(HttpService.JSONDecode, HttpService, response.Body)
+
+		if not jsonSuccess then
+			statusLabel.Text = "Error: Invalid server response."
+			return
+		end
+
+		if responseData.success == true then
+			statusLabel.Text = "Key Verified! Loading..."
+			wait(2)
+			screenGui:Destroy()
+			callback()
+		else
+			statusLabel.Text = "Key is denied. (" .. (responseData.message or "Unknown failure") .. ")"
+		end
+	end
+
+	getKeyButton.MouseButton1Click:Connect(function()
+		setclipboard(API_BASE_URL)
+		statusLabel.Text = "Status: 'Get Key' link copied."
+	end)
+
+	joinDiscordButton.MouseButton1Click:Connect(function()
+		setclipboard("https://discord.gg/KeF7zJCPHH")
+		statusLabel.Text = "Status: Discord link copied."
+	end)
+
+	checkKeyButton.MouseButton1Click:Connect(function()
+		performVerification(keyInput.Text)
+	end)
+
+	pasteAndCheckButton.MouseButton1Click:Connect(function()
+		local clipboard = getclipboard()
+		if clipboard then
+			keyInput.Text = clipboard
+			performVerification(clipboard)
+		else
+			statusLabel.Text = "Status: Clipboard is empty."
+		end
+	end)
+	
+	keyInput.FocusLost:Connect(function(enterPressed)
+		if enterPressed then
+			performVerification(keyInput.Text)
 		end
 	end)
 end

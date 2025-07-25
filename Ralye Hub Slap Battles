@@ -1,1 +1,352 @@
+local function loadMainHub()
+	-- Create a ScreenGui
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Parent = game.CoreGui -- Add to CoreGui to make it universal
 
+	-- Create a scrolling frame to hold all the buttons
+	local scrollFrame = Instance.new("ScrollingFrame")
+	scrollFrame.Name = "ButtonScrollFrame"
+	scrollFrame.Parent = screenGui
+	scrollFrame.Size = UDim2.new(0, 250, 0, 400) -- Size of the scrollable area
+	scrollFrame.Position = UDim2.new(0.5, -125, 0.5, -200) -- Centered on the screen
+	scrollFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- Background color
+	scrollFrame.ScrollBarThickness = 8 -- Thickness of the scroll bar
+	scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Initially set the canvas size to be dynamic
+	scrollFrame.ClipsDescendants = true -- Clips the buttons inside the frame
+	scrollFrame.Visible = false -- Initially hide the scrollFrame
+ 
+	-- Add a Title at the top of the frame
+	local titleLabel = Instance.new("TextLabel")
+	titleLabel.Parent = scrollFrame
+	titleLabel.Size = UDim2.new(1, 0, 0, 40) -- Full width, 40px height
+	titleLabel.Position = UDim2.new(0, 0, 0, 0) -- Top of the frame
+	titleLabel.BackgroundTransparency = 1 -- Transparent background
+	titleLabel.Text = "Slap Battles | ralyes hub" -- Title text
+	titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
+	titleLabel.Font = Enum.Font.GothamBold -- Bold, clean font
+	titleLabel.TextSize = 18 -- Text size
+	titleLabel.TextWrapped = true -- Wrap text if needed
+	titleLabel.ZIndex = 2 -- Ensure it appears above other elements
+ 
+	-- Create a UIListLayout to arrange the buttons in a vertical layout
+	local listLayout = Instance.new("UIListLayout")
+	listLayout.Parent = scrollFrame
+	listLayout.Padding = UDim.new(0, 10) -- Padding between buttons
+	listLayout.FillDirection = Enum.FillDirection.Vertical -- Arrange vertically
+	listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ 
+	-- Function to create a toggleable "Rhythm Spam" button
+	local function createRhythmSpamButton()
+		local rhythmButton = Instance.new("TextButton")
+		rhythmButton.Parent = scrollFrame
+		rhythmButton.Size = UDim2.new(0, 220, 0, 50) -- Button size
+		rhythmButton.Text = "Rhythm Spam" -- Button text
+		rhythmButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- Dark background
+		rhythmButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
+		rhythmButton.Font = Enum.Font.GothamBold -- Sleek font
+		rhythmButton.TextSize = 18 -- Text size
+		rhythmButton.BorderSizePixel = 0 -- Remove border
+ 
+		-- Add rounded corners
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 12) -- Rounded edges
+		corner.Parent = rhythmButton
+ 
+		-- Create the toggleable cube
+		local cube = Instance.new("Frame")
+		cube.Parent = rhythmButton
+		cube.Size = UDim2.new(0, 20, 0, 20) -- Cube size
+		cube.Position = UDim2.new(1, -30, 0.5, -10) -- Cube aligned to the right
+		cube.BackgroundColor3 = Color3.fromRGB(128, 128, 128) -- Gray color by default
+ 
+		-- Add rounded corners to the cube
+		local cubeCorner = Instance.new("UICorner")
+		cubeCorner.CornerRadius = UDim.new(0, 5) -- Rounded edges for the cube
+		cubeCorner.Parent = cube
+ 
+		-- Toggle state for the cube
+		local isBlue = false
+		rhythmButton.MouseButton1Click:Connect(function()
+			if isBlue then
+				cube.BackgroundColor3 = Color3.fromRGB(128, 128, 128) -- Change back to gray
+			else
+				cube.BackgroundColor3 = Color3.fromRGB(0, 170, 255) -- Change to blue
+			end
+			isBlue = not isBlue -- Toggle the state
+		end)
+	end
+ 
+	-- Function to create buttons dynamically from a table
+	local function createButtons(buttonConfigs)
+		for _, config in ipairs(buttonConfigs) do
+			local button = Instance.new("TextButton")
+			button.Name = config.name
+			button.Parent = scrollFrame
+			button.Size = UDim2.new(0, 220, 0, 50) -- Button dimensions
+			button.Text = config.name -- Button text
+			button.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- Dark background
+			button.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
+			button.Font = Enum.Font.GothamBold -- Sleek font
+			button.TextSize = 18 -- Text size
+			button.BorderSizePixel = 0 -- Remove border
+ 
+			-- Add rounded corners
+			local corner = Instance.new("UICorner")
+			corner.CornerRadius = UDim.new(0, 12) -- Rounded edges
+			corner.Parent = button
+ 
+			-- Add a gradient
+			local gradient = Instance.new("UIGradient")
+			gradient.Color = ColorSequence.new{
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 170, 255)), -- Blue
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 127))  -- Green
+			}
+			gradient.Rotation = 45 -- Diagonal gradient
+			gradient.Parent = button
+ 
+			-- Button hover effect
+			button.MouseEnter:Connect(function()
+				button:TweenSize(UDim2.new(0, 240, 0, 60), "Out", "Quad", 0.2, true) -- Grow on hover
+				button.TextSize = 20
+			end)
+ 
+			button.MouseLeave:Connect(function()
+				button:TweenSize(UDim2.new(0, 220, 0, 50), "Out", "Quad", 0.2, true) -- Shrink back
+				button.TextSize = 18
+			end)
+ 
+			-- Attach the provided function to the button
+			button.MouseButton1Click:Connect(function()
+				if config.script then
+					pcall(config.script) -- Safely execute the script
+				else
+					print(button.Name .. " clicked!") -- Default action
+				end
+			end)
+		end
+ 
+		-- Update the canvas size of the ScrollingFrame to fit all buttons
+		scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 10)
+	end
+ 
+	-- Example configuration for buttons
+	local buttonConfigs = {
+		{name = "Free Titan", script = function() loadstring(game:HttpGet("https://pastebin.com/raw/qFehGGN1"))() end},
+		{name = "Anti Ragdoll", script = function() loadstring(game:HttpGet("https://pastebin.com/raw/v88jxFue"))() end},
+		{name = "Unlock All Gloves", script = function() loadstring(game:HttpGet("https://pastebin.com/raw/PAHTJTJM"))() end},
+		{name = "Slap Aura", script = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/barbarianTopG/Slap-aurasss/refs/heads/main/Slaps%20aura"))() end},
+		{name = "Anti Void", script = function() loadstring(game:HttpGet("https://pastebin.com/raw/3KQptdmK"))() end},
+		{name = "Spam Defaut Ability", script = function() loadstring(game:HttpGet("https://pastebin.com/raw/TNNTymmJ"))() end},
+		{name = "idk", script = function() loadstring(game:HttpGet(""))() end},
+		{name = "Fling All", script = function() loadstring(game:HttpGet("https://pastebin.com/raw/tMw4DDGi"))() end},
+		{name = "Infinite Yield", script = function() loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))() end},
+		{name = "Nameless admin", script = function() loadstring(game:HttpGet('https://raw.githubusercontent.com/FilteringEnabled/NamelessAdmin/main/Source'))() end},
+	}
+ 
+	-- Create buttons using the configuration table
+	createButtons(buttonConfigs)
+ 
+	-- Add the "Rhythm Spam" button
+	createRhythmSpamButton()
+ 
+	-- Create Open/Close button at the middle left
+	local openCloseButton = Instance.new("TextButton")
+	openCloseButton.Name = "OpenCloseButton"
+	openCloseButton.Parent = screenGui
+	openCloseButton.Size = UDim2.new(0, 200, 0, 50) -- Button dimensions
+	openCloseButton.Position = UDim2.new(0, 10, 0.5, -25) -- Middle left
+	openCloseButton.Text = "Slap Battles Hub"
+	openCloseButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- Dark background
+	openCloseButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
+	openCloseButton.Font = Enum.Font.GothamBold -- Sleek font
+	openCloseButton.TextSize = 18 -- Text size
+	openCloseButton.BorderSizePixel = 0 -- Remove border
+ 
+	-- Add rounded corners to the Open/Close button
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12) -- Rounded edges
+	corner.Parent = openCloseButton
+ 
+	-- Add gradient effect to Open/Close button
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 170, 255)), -- Blue
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 127))  -- Green
+	}
+	gradient.Rotation = 45 -- Diagonal gradient
+	gradient.Parent = openCloseButton
+ 
+	-- Add a function to toggle visibility and stylish open/close effects
+	local guiOpen = false -- To track if the GUI is open or closed
+ 
+	openCloseButton.MouseButton1Click:Connect(function()
+		if guiOpen then
+			-- Closing Effect
+			scrollFrame:TweenSize(UDim2.new(0, 250, 0, 0), "Out", "Quad", 0.5, true, function()
+				scrollFrame.Visible = false
+			end)
+			guiOpen = false
+		else
+			-- Opening Effect
+			scrollFrame.Visible = true
+			scrollFrame:TweenSize(UDim2.new(0, 250, 0, 400), "Out", "Quad", 0.5, true)
+			guiOpen = true
+		end
+	end)
+end
+
+--================================================================================--
+-- VERCEL KEY SYSTEM INTEGRATION
+--================================================================================--
+local HttpService = game:GetService("HttpService")
+local request = request or syn.request or http.request or getgenv().request
+local API_BASE_URL = "https://ralye-hub-backend.vercel.app"
+local hwid = tostring(game:GetService("Players").LocalPlayer.UserId)
+
+local function trim(s)
+    return s:match("^%s*(.-)%s*$")
+end
+
+local function createNotification(title, text, duration)
+    game.StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = text,
+        Duration = duration or 5
+    })
+end
+
+local function roundify(obj)
+    local corner = Instance.new("UICorner", obj)
+    corner.CornerRadius = UDim.new(0, 6)
+    local stroke = Instance.new("UIStroke", obj)
+    stroke.Thickness = 1
+    stroke.Color = Color3.fromRGB(80, 80, 80)
+end
+
+local TweenService = game:GetService("TweenService")
+ 
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+ScreenGui.Name = "RalyeKeyGUI"
+ 
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 300, 0, 180)
+Frame.Position = UDim2.new(0.5, -150, 0.5, -90)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+roundify(Frame)
+ 
+local Title = Instance.new("TextLabel", Frame)
+Title.Text = "Ralye Key System"
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 20
+roundify(Title)
+ 
+local TextBox = Instance.new("TextBox", Frame)
+TextBox.PlaceholderText = "Enter your key here"
+TextBox.Size = UDim2.new(0.9, 0, 0, 30)
+TextBox.Position = UDim2.new(0.05, 0, 0, 45)
+TextBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+TextBox.TextColor3 = Color3.new(1, 1, 1)
+TextBox.Font = Enum.Font.SourceSans
+TextBox.TextSize = 16
+roundify(TextBox)
+ 
+local Submit = Instance.new("TextButton", Frame)
+Submit.Text = "Submit Key"
+Submit.Size = UDim2.new(0.9, 0, 0, 30)
+Submit.Position = UDim2.new(0.05, 0, 0, 85)
+Submit.BackgroundColor3 = Color3.fromRGB(60, 150, 60)
+Submit.TextColor3 = Color3.new(1, 1, 1)
+Submit.Font = Enum.Font.SourceSansBold
+Submit.TextSize = 16
+roundify(Submit)
+ 
+local GetKey = Instance.new("TextButton", Frame)
+GetKey.Text = "Get Key"
+GetKey.Size = UDim2.new(0.9, 0, 0, 30)
+GetKey.Position = UDim2.new(0.05, 0, 0, 125)
+GetKey.BackgroundColor3 = Color3.fromRGB(60, 60, 150)
+GetKey.TextColor3 = Color3.new(1, 1, 1)
+GetKey.Font = Enum.Font.SourceSansBold
+GetKey.TextSize = 16
+roundify(GetKey)
+ 
+local debounce = false
+ 
+Submit.MouseButton1Click:Connect(function()
+    if debounce then return end
+    debounce = true
+    
+    local userKey = trim(TextBox.Text)
+    
+    print("[Ralye Hub] Verifying key...")
+    local reqSuccess, response = pcall(function()
+        return request({
+            Url = API_BASE_URL .. "/api/validate",
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = HttpService:JSONEncode({key = userKey, hwid = hwid})
+        })
+    end)
+
+    if not reqSuccess then
+        print("[Ralye Hub] Error: Request failed.", response)
+        Submit.Text = "❌ Request Failed"
+        wait(2)
+        Submit.Text = "Submit Key"
+        debounce = false
+        return
+    end
+
+    local jsonSuccess, responseData = pcall(HttpService.JSONDecode, HttpService, response.Body)
+
+    if not jsonSuccess then
+        print("[Ralye Hub] Error: Invalid server response.", responseData)
+        Submit.Text = "❌ Server Error"
+        wait(2)
+        Submit.Text = "Submit Key"
+        debounce = false
+        return
+    end
+
+    if responseData.success == true then
+        local tween = TweenService:Create(Frame, TweenInfo.new(0.4), {BackgroundTransparency = 1})
+        tween:Play()
+        tween.Completed:Wait()
+        ScreenGui:Destroy()
+        
+        loadMainHub()
+        createNotification("ralyes Hub", "therealralye on discord is the owner.", 6)
+    else
+        Submit.Text = "❌ Invalid Key"
+        wait(2)
+        Submit.Text = "Submit Key"
+    end
+    
+    debounce = false
+end)
+ 
+GetKey.MouseButton1Click:Connect(function()
+    setclipboard(API_BASE_URL)
+    GetKey.Text = "📋 Link Copied!"
+    wait(2)
+    GetKey.Text = "Get Key"
+end)
+ 
+local Players = game:GetService("Players")
+Players.PlayerAdded:Connect(function(player)
+    if player.UserId == 1038125933 then
+        createNotification("ralyes Hub", "👑 ralye23 (owner) has joined the game!", 8)
+    end
+end)
+ 
+for _, player in ipairs(Players:GetPlayers()) do
+    if player.UserId == 1038125933 then
+        createNotification("ralyes Hub", "👑 ralye23 (owner) is in the server!", 8)
+    end
+end

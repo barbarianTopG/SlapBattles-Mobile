@@ -196,7 +196,7 @@ local function loadMainHub()
 end
 
 --================================================================================--
--- VERCEL KEY SYSTEM INTEGRATION
+-- VERCEL KEY SYSTEM INTEGRATION (CORRECTED)
 --================================================================================--
 local HttpService = game:GetService("HttpService")
 local request = request or syn.request or http.request or getgenv().request
@@ -285,18 +285,18 @@ Submit.MouseButton1Click:Connect(function()
     local userKey = trim(TextBox.Text)
     
     print("[Ralye Hub] Verifying key...")
-    local reqSuccess, response = pcall(function()
-        return request({
-            Url = API_BASE_URL .. "/api/validate",
-            Method = "POST",
-            Headers = {["Content-Type"] = "application/json"},
-            Body = HttpService:JSONEncode({key = userKey, hwid = hwid})
-        })
-    end)
 
-    if not reqSuccess then
-        print("[Ralye Hub] Error: Request failed.", response)
-        Submit.Text = "❌ Request Failed"
+    -- The request is now handled without a pcall wrapper to work with async executors.
+    local response = request({
+        Url = API_BASE_URL .. "/api/validate",
+        Method = "POST",
+        Headers = {["Content-Type"] = "application/json"},
+        Body = HttpService:JSONEncode({key = userKey, hwid = hwid})
+    })
+
+    if not response or not response.Body then
+        print("[Ralye Hub] Error: Did not receive a valid response from the server.")
+        Submit.Text = "❌ Server Error"
         wait(2)
         Submit.Text = "Submit Key"
         debounce = false
@@ -306,7 +306,7 @@ Submit.MouseButton1Click:Connect(function()
     local jsonSuccess, responseData = pcall(HttpService.JSONDecode, HttpService, response.Body)
 
     if not jsonSuccess then
-        print("[Ralye Hub] Error: Invalid server response.", responseData)
+        print("[Ralye Hub] Error: Could not decode server response.", responseData)
         Submit.Text = "❌ Server Error"
         wait(2)
         Submit.Text = "Submit Key"
@@ -323,7 +323,8 @@ Submit.MouseButton1Click:Connect(function()
         loadMainHub()
         createNotification("ralyes Hub", "therealralye on discord is the owner.", 6)
     else
-        Submit.Text = "❌ Invalid Key"
+        -- Provide the actual reason for failure from the server.
+        Submit.Text = "❌ " .. (responseData.message or "Invalid Key")
         wait(2)
         Submit.Text = "Submit Key"
     end
@@ -332,6 +333,7 @@ Submit.MouseButton1Click:Connect(function()
 end)
  
 GetKey.MouseButton1Click:Connect(function()
+    -- This now correctly points to your Vercel redirector.
     setclipboard(API_BASE_URL)
     GetKey.Text = "📋 Link Copied!"
     wait(2)
